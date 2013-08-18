@@ -12,7 +12,6 @@
 #include "SimpleAudioEngine.h"
 #include "ScreenHelper.h"
 
-using namespace cocos2d;
 using namespace CocosDenshion;
 
 const int LINE_SPACE = 50;
@@ -92,6 +91,11 @@ bool GameScene::init()
 //    
 //    // add the sprite as a child to this layer
 //    this->addChild(pSprite, 0);
+    
+    // create and add the grid
+    Grid* gridRef = new Grid();
+    gridRef->setPosition(VisibleRect::center());
+    this->addChild(gridRef);
     
     return true;
 }

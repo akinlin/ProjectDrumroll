@@ -55,10 +55,9 @@ bool TitleScene::init()
     m_pItemMenu = CCMenu::create();
     for (int i = 0; i < ITEM_COUNT; ++i)
     {
-        CCLabelTTF* label = CCLabelTTF::create(menuItem[i].c_str(), "Arial", 20);
+        CCLabelTTF* label = CCLabelTTF::create(menuItem[i].c_str(), "Arial", VisibleRect::getScaledFont(20));
         CCMenuItemLabel* pMenuItem = CCMenuItemLabel::create(label, this, menu_selector(TitleScene::menuCallback));
         pMenuItem->setAnchorPoint(CCPointZero);
-        pMenuItem->setScale(VisibleRect::getScale());
         
         contentHeight = MAX(contentHeight, pMenuItem->getContentSize().height);
         contentWidth = MAX(contentWidth, pMenuItem->getContentSize().width);

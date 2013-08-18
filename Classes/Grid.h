@@ -10,31 +10,22 @@
 #define __ProjectDrumroll__Grid__
 
 #include "cocos2d.h"
+#include "GamePiece.h"
 USING_NS_CC;
 
-class Grid
+const int GRID_COLS = 5;
+const int GRID_ROWS = 5;
+
+class Grid : public CCLayer
 {
 public:
-    static CCRect getVisibleRect();
-    static CCRect getTargetRect();
+    Grid();
+    ~Grid();
     
-    static CCPoint left();
-    static CCPoint right();
-    static CCPoint top();
-    static CCPoint bottom();
-    static CCPoint center();
-    static CCPoint leftTop();
-    static CCPoint rightTop();
-    static CCPoint leftBottom();
-    static CCPoint rightBottom();
+    GamePiece getGamePieceAtIndex(int row, int col);
     
-    static int getScaledFont(int fontSize);
-    static float getScale();
 private:
-    static void lazyInit();
-    static CCRect s_visibleRect;
-    static CCRect s_targetRect;
-    
+    GamePiece* gridTable[GRID_ROWS][GRID_COLS];
 };
 
 #endif /* defined(__ProjectDrumroll__Grid__) */
