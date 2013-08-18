@@ -94,7 +94,7 @@ bool GameScene::init()
     
     // create and add the grid
     Grid* gridRef = new Grid();
-    gridRef->setPosition(VisibleRect::center());
+    gridRef->setPosition(ccp(CCDirector::sharedDirector()->getWinSize().width/2, CCDirector::sharedDirector()->getWinSize().height/2));
     this->addChild(gridRef);
     
     return true;

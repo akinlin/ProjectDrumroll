@@ -12,19 +12,21 @@
 Grid::Grid()
 {
     // create game pieces and fill the grid
-    GamePiece* gamePieceSprite = new GamePiece();
     for (int i = 0; i < GRID_ROWS; i++)
     {
         for (int j = 0; j < GRID_COLS; j++)
         {
             // create a piece and assign it to the grid location
+            GamePiece* gamePieceSprite = new GamePiece();
             gamePieceSprite->setPosition(ccp(j * gamePieceSprite->getTextureWidth(), i * gamePieceSprite->getTextureHeight()));
             gridTable[i][j] = gamePieceSprite;
+            
+            gridWidth += gamePieceSprite->getTextureWidth();
+            gridHeight += gamePieceSprite->getTextureHeight();
             
             addChild(gridTable[i][j]);
         }
     }
-    //setAnchorPoint(ccp(GRID_ROWS * gamePieceSprite->getTextureWidth(), GRID_COLS * gamePieceSprite->getTextureHeight()));
 }
 
 Grid::~Grid()
@@ -46,6 +48,16 @@ Grid::~Grid()
 GamePiece Grid::getGamePieceAtIndex(int row, int col)
 {
     return *gridTable[row][col];
+}
+
+int Grid::getWidth()
+{
+    return gridWidth;
+}
+
+int Grid::getHeight()
+{
+    return gridHeight;
 }
 
 

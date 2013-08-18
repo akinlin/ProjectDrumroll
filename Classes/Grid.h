@@ -24,8 +24,14 @@ public:
     
     GamePiece getGamePieceAtIndex(int row, int col);
     
+    int getWidth();
+    int getHeight();
+    
 private:
     GamePiece* gridTable[GRID_ROWS][GRID_COLS];
+    
+    int gridWidth;
+    int gridHeight;
 };
 
 #endif /* defined(__ProjectDrumroll__Grid__) */
