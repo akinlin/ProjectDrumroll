@@ -15,11 +15,12 @@
 using namespace CocosDenshion;
 
 const int LINE_SPACE = 50;
-const int ITEM_COUNT = 2;
+const int ITEM_COUNT = 4;
 const std::string menuItem[ITEM_COUNT] =
 {
     "Game Over",
-    "Next Level"
+    "Next Level",
+    "Toogle Touch State"
 };
 
 static int LEVEL = 0;
@@ -82,20 +83,11 @@ bool GameScene::init()
     
     // add the label as a child to this layer
     this->addChild(pLabel, 1);
-    
-//    // add "HelloWorld" splash screen"
-//    CCSprite* pSprite = CCSprite::create("HelloWorld.png");
-//    
-//    // position the sprite on the center of the screen
-//    pSprite->setPosition( ccp(size.width/2, size.height/2) );
-//    
-//    // add the sprite as a child to this layer
-//    this->addChild(pSprite, 0);
-    
+        
     // create and add the grid
-    Grid* gridRef = new Grid();
-    gridRef->setPosition(ccp(CCDirector::sharedDirector()->getWinSize().width/2, CCDirector::sharedDirector()->getWinSize().height/2));
-    this->addChild(gridRef);
+    m_gridReference = new Grid();
+    m_gridReference->setPosition(ccp(CCDirector::sharedDirector()->getWinSize().width/2 - m_gridReference->getWidth()/2, CCDirector::sharedDirector()->getWinSize().height/2 - m_gridReference->getHeight()/2));
+    this->addChild(m_gridReference);
     
     return true;
 }
@@ -117,7 +109,12 @@ void GameScene::menuCallback(CCObject* pSender)
             LEVEL = 0;
             break;
         case 1:
-            pScene = GameScene::scene(); break;
+            pScene = GameScene::scene();
+            break;
+        case 2:
+            // change the touch state
+            m_gridReference->toggleTouchType();
+            break;
         default:
             break;
     }

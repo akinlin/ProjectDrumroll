@@ -31,6 +31,7 @@ public:
     
 private:
     CCMenu* m_pItemMenu;
+    Grid* m_gridReference;
 };
 
 #endif /* defined(__ProjectDrumroll__GameScene__) */

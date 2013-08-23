@@ -22,16 +22,24 @@ public:
     Grid();
     ~Grid();
     
-    GamePiece getGamePieceAtIndex(int row, int col);
+    GamePiece* getGamePieceAtIndex(int row, int col);
+    GamePiece* getGamePieceAtLocation(CCPoint p);
     
-    int getWidth();
-    int getHeight();
+    float getWidth();
+    float getHeight();
+    // handle the touch event at a given coordinate
+    void handleTouch(CCPoint p);
+    
+    void toggleTouchType();
+    void eliminateGamePieces();
+    
+    virtual void ccTouchesEnded(cocos2d::CCSet* touches, cocos2d::CCEvent* event);
     
 private:
     GamePiece* gridTable[GRID_ROWS][GRID_COLS];
     
-    int gridWidth;
-    int gridHeight;
+    int touchState;
+    
 };
 
 #endif /* defined(__ProjectDrumroll__Grid__) */

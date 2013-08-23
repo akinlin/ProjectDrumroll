@@ -11,6 +11,7 @@
 
 
 #include "cocos2d.h"
+#include "SpritHelper.h"
 USING_NS_CC;
 
 class GamePiece : public CCSprite
@@ -24,13 +25,12 @@ public:
     int getTextureWidth();
     int getTextureHeight();
     
+    void switchToRandomPiece();
+    
 private:
     int s_color;
     int s_interactionType;
-    CCSprite* pieceSprite;
-    
-    int textureWidth;
-    int textureHeight;
+    Blocks* m_BlocksSprite;
 };
 
 #endif /* defined(__ProjectDrumroll__GamePiece__) */
