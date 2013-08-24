@@ -111,5 +111,5 @@ float VisibleRect::getScale()
 {
     lazyInit();
    
-    return MIN(s_visibleRect.size.height / s_targetRect.size.height, s_visibleRect.size.width / s_targetRect.size.width);;
+    return MIN(s_visibleRect.size.height / s_targetRect.size.height, s_visibleRect.size.width / s_targetRect.size.width) + 0.3f;
 }

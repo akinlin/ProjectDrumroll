@@ -89,6 +89,9 @@ bool GameScene::init()
     m_gridReference->setPosition(ccp(CCDirector::sharedDirector()->getWinSize().width/2 - m_gridReference->getWidth()/2, CCDirector::sharedDirector()->getWinSize().height/2 - m_gridReference->getHeight()/2));
     this->addChild(m_gridReference);
     
+    // schedule the level complete check
+    schedule( schedule_selector(GameScene::checkForEndOfLevel), 1);
+    
     return true;
 }
 
@@ -125,4 +128,19 @@ void GameScene::menuCallback(CCObject* pSender)
         CCDirector::sharedDirector()->replaceScene(pScene);
     }
     
+}
+
+void GameScene::checkForEndOfLevel()
+{
+    if (m_gridReference->isLevelComplete())
+    {
+        // change to the next level
+        CCScene *pScene = NULL;
+        pScene = GameScene::scene();
+        // run
+        if (pScene)
+        {
+            CCDirector::sharedDirector()->replaceScene(pScene);
+        }
+    }
 }

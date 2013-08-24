@@ -32,6 +32,8 @@ public:
 private:
     CCMenu* m_pItemMenu;
     Grid* m_gridReference;
+    
+    void checkForEndOfLevel();
 };
 
 #endif /* defined(__ProjectDrumroll__GameScene__) */

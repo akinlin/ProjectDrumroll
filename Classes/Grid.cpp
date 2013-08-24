@@ -10,14 +10,17 @@
 #include "GamePiece.h"
 #include "ScreenHelper.h"
 
-enum ToucState
+enum TouchState
 {
     interact = 0,
     eliminate = 1
 };
 
+int Grid::m_score = 0;
+
 Grid::Grid()
 {
+    // turn on touch events
     setTouchEnabled( true );
     
     // create game pieces and fill the grid
@@ -39,6 +42,14 @@ Grid::Grid()
     this->setContentSize(CCSizeMake(gridTable[0][0]->getTextureWidth() * GRID_COLS, gridTable[0][0]->getTextureHeight() * GRID_ROWS));
     
     touchState = interact;
+    
+    // display the score value (probably needs to be in a HUD class)
+    char scoreDisplayString[100];
+    sprintf(scoreDisplayString, "Score: %d", m_score);
+    m_scoreDisplayString = CCLabelTTF::create(scoreDisplayString, "Arial", VisibleRect::getScaledFont(10));
+    m_scoreDisplayString->setAnchorPoint(CCPointZero);
+    m_scoreDisplayString->setPosition(ccp(getWidth()/2, -VisibleRect::getScaledFont(100)));
+    addChild(m_scoreDisplayString);
 }
 
 Grid::~Grid()
@@ -62,13 +73,26 @@ GamePiece* Grid::getGamePieceAtIndex(int row, int col)
     return gridTable[row][col];
 }
 
+CCPoint Grid::getIndexAtGamePiece(GamePiece* basePiece)
+{
+    CCPoint globalPostion = basePiece->getPosition();
+    CCLog("Global Location row:%f col:%f", globalPostion.y, globalPostion.x);
+    // position of sprite is at the anchor point of sprite
+    int row = globalPostion.y/VisibleRect::getScaledFont(32);
+    int col = globalPostion.x/VisibleRect::getScaledFont(32);
+    CCPoint indexPoint = ccp(col,row);
+    CCLog("Created Point row:%f col:%f", indexPoint.y, indexPoint.x);
+    return indexPoint;
+}
+
 GamePiece* Grid::getGamePieceAtLocation(CCPoint p)
 {
-    int row = (p.x-getPositionX())/VisibleRect::getScaledFont(32);
-    int col = (p.y-getPositionY())/VisibleRect::getScaledFont(32);
+    // reused code from getIndexAtGamePiece probably should create a funcation for getting the row and col
+    int row = (p.y-getPositionY())/VisibleRect::getScaledFont(32);
+    int col = (p.x-getPositionX())/VisibleRect::getScaledFont(32);
     CCLog("ROWCOL: x=%d y=%d", row, col);
     
-    return getGamePieceAtIndex(col, row);
+    return getGamePieceAtIndex(row, col);
 }
 
 float Grid::getWidth()
@@ -106,12 +130,26 @@ void Grid::handleTouch(CCPoint p)
                 {
                     // do something with it to test the touch location
                     gamePieceSprite->switchToRandomPiece();
+                    
+                    // take away 5 points for every touch
+                    m_score = m_score - 5;
                 }
                 else
                 {
                     // do something with it to test the touch location
-                    eliminateGamePieces();
+                    int comboCount = eliminateGamePieces(gamePieceSprite,0);
+                    if (comboCount == 0)
+                    {
+                        // only one piece was eliminated
+                        m_score = m_score - 150;
+                    }
+                    else
+                    {
+                        // a combo of two or more was created
+                        m_score = m_score + (100*(comboCount+1));
+                    }
                 }
+                updateScore();
                 CCLog("Touch handled");
             }
         }
@@ -130,10 +168,215 @@ void Grid::toggleTouchType()
     }
 }
 
-void Grid::eliminateGamePieces()
+// TODO: This function is bloated as hell. The logic is expanded for readability and debugging.
+// Once this is verified as solid it should be moved into a less readable but more efficient form.
+int Grid::eliminateGamePieces(GamePiece* basePiece, int comboCount)
 {
+    CCLog("^^^^^^^^^^^");
     // check all linked pieces and remove them
+    // run a recursive function checking for matching pieces in the following order:
+    // up, right, down, left (clockwise)
+    if(basePiece != NULL && basePiece->isVisible())
+    {
+        // set the flag to indicate the piece is in an eliminate loop check
+        basePiece->setElinationCheck(true);
+        
+        // get the grid location of the basepiece
+        CCPoint basePieceindex = getIndexAtGamePiece(basePiece);
+        
+        // check up
+        float aboveRow = basePieceindex.y + 1.0f;
+        CCLog("Check piece row:%f col:%f", basePieceindex.y, basePieceindex.x);
+        CCLog("Above piece row:%f col:%f", aboveRow, basePieceindex.x);
+        
+        // really only need to check if the index is out of bounds in one direction since the
+        // basePieceindex is assumed to be valid, but checking both for completeness.
+        // similar checks for the rest of the tests
+        if (aboveRow > 0 && aboveRow < GRID_ROWS)
+        {
+            GamePiece* abovePiece = getGamePieceAtIndex(aboveRow, basePieceindex.x);
+            CCPoint abovePieceLocation = abovePiece->getPosition();
+            CCLog("Actual above piece row:%f col:%f", abovePieceLocation.y, abovePieceLocation.x);
+            // first make sure the piece hasn't already been checked
+            if (abovePiece != NULL)
+            {
+                if (!abovePiece->isInElinationCheck())
+                {
+                    if (basePiece->getPieceColor() == abovePiece->getPieceColor())
+                    {
+                        CCLog("FOUND MATCH");
+                        // piece above matches trigger recursive check with this as a the base piece
+                        comboCount = MAX(comboCount, eliminateGamePieces(abovePiece, comboCount+1));
+                    }
+                    else
+                    {
+                        CCLog("NO MATCH FOUND");
+                    }
+                }
+                else
+                {
+                    CCLog("PIECE ALREADY CHECKED");
+                }
+            }
+            else
+            {
+                CCLog("PIECE NOT VALID");
+            }
+        }
+        else
+        {
+            CCLog("PIECE OUT OF BOUNDS");
+        }
+        
+        // check right
+        float rightCol = basePieceindex.x + 1.0f;
+        CCLog("Check piece row:%f col:%f", basePieceindex.y, basePieceindex.x);
+        CCLog("Piece to the right row:%f col:%f", basePieceindex.y, rightCol);
+        
+        // really only need to check if the index is out of bounds in one direction since the
+        // basePieceindex is assumed to be valid, but checking both for completeness.
+        // similar checks for the rest of the tests
+        if (rightCol > 0 && rightCol < GRID_COLS)
+        {
+            GamePiece* rightPiece = getGamePieceAtIndex(basePieceindex.y, rightCol);
+            CCPoint rightPieceLocation = rightPiece->getPosition();
+            CCLog("Actual right piece row:%f col:%f", rightPieceLocation.y, rightPieceLocation.x);
+            // first make sure the piece hasn't already been checked
+            if (rightPiece != NULL)
+            {
+                if (!rightPiece->isInElinationCheck())
+                {
+                    if (basePiece->getPieceColor() == rightPiece->getPieceColor())
+                    {
+                        CCLog("FOUND MATCH");
+                        // piece above matches trigger recursive check with this as a the base piece
+                        comboCount = MAX(comboCount, eliminateGamePieces(rightPiece,comboCount+1));
+                    }
+                    else
+                    {
+                        CCLog("NO MATCH FOUND");
+                    }
+                }
+                else
+                {
+                    CCLog("PIECE ALREADY CHECKED");
+                }
+            }
+            else
+            {
+                CCLog("PIECE NOT VALID");
+            }
+        }
+        else
+        {
+            CCLog("PIECE OUT OF BOUNDS");
+        }
+        
+        // check down
+        float downRow = basePieceindex.y - 1.0f;
+        CCLog("Check piece row:%f col:%f", basePieceindex.y, basePieceindex.x);
+        CCLog("Down piece row:%f col:%f", downRow, basePieceindex.x);
+        
+        // really only need to check if the index is out of bounds in one direction since the
+        // basePieceindex is assumed to be valid, but checking both for completeness.
+        // similar checks for the rest of the tests
+        if (downRow >= 0 && downRow < GRID_ROWS)
+        {
+            GamePiece* downPiece = getGamePieceAtIndex(downRow, basePieceindex.x);
+            CCPoint downPieceLocation = downPiece->getPosition();
+            CCLog("Actual down piece row:%f col:%f", downPieceLocation.y, downPieceLocation.x);
+            // first make sure the piece hasn't already been checked
+            if (downPiece != NULL)
+            {
+                if (!downPiece->isInElinationCheck())
+                {
+                    if (basePiece->getPieceColor() == downPiece->getPieceColor())
+                    {
+                        CCLog("FOUND MATCH");
+                        // piece above matches trigger recursive check with this as a the base piece
+                        comboCount = MAX(comboCount, eliminateGamePieces(downPiece,comboCount+1));
+                    }
+                    else
+                    {
+                        CCLog("NO MATCH FOUND");
+                    }
+                }
+                else
+                {
+                    CCLog("PIECE ALREADY CHECKED");
+                }
+            }
+            else
+            {
+                CCLog("PIECE NOT VALID");
+            }
+        }
+        else
+        {
+            CCLog("PIECE OUT OF BOUNDS");
+        }
+        
+        // check left
+        float leftCol = basePieceindex.x - 1.0f;
+        CCLog("Check piece row:%f col:%f", basePieceindex.y, basePieceindex.x);
+        CCLog("Piece to the left row:%f col:%f", basePieceindex.y, leftCol);
+        
+        // really only need to check if the index is out of bounds in one direction since the
+        // basePieceindex is assumed to be valid, but checking both for completeness.
+        // similar checks for the rest of the tests
+        if (leftCol >= 0 && leftCol < GRID_COLS)
+        {
+            GamePiece* leftPiece = getGamePieceAtIndex(basePieceindex.y, leftCol);
+            CCPoint leftPieceLocation = leftPiece->getPosition();
+            CCLog("Actual right piece row:%f col:%f", leftPieceLocation.y, leftPieceLocation.x);
+            // first make sure the piece hasn't already been checked
+            if (leftPiece != NULL)
+            {
+                if (!leftPiece->isInElinationCheck())
+                {
+                    if (basePiece->getPieceColor() == leftPiece->getPieceColor())
+                    {
+                        CCLog("FOUND MATCH");
+                        // piece above matches trigger recursive check with this as a the base piece
+                        comboCount = MAX(comboCount, eliminateGamePieces(leftPiece,comboCount+1));
+                    }
+                    else
+                    {
+                        CCLog("NO MATCH FOUND");
+                    }
+                }
+                else
+                {
+                    CCLog("PIECE ALREADY CHECKED");
+                }
+            }
+            else
+            {
+                CCLog("PIECE NOT VALID");
+            }
+        }
+        else
+        {
+            CCLog("PIECE OUT OF BOUNDS");
+        }
+
+        // reset the flag to indicate the piece is in an eliminate loop check
+        basePiece->setElinationCheck(false);
+        
+        // remove the piece
+        // try just deleting it (hopefully the rest of the code has checks for valid pieces)
+        //delete basePiece;
+        basePiece->setVisible(false);
+        
+        CCLog("COMBO COUNT: %d", comboCount);
+    }
+    else
+    {
+        CCLog("BASE NOT VALID");
+    }
+    CCLog("XX^^^^^^^^^^^^^XX");
     
+    return comboCount;
 }
 
 void Grid::ccTouchesEnded(CCSet* touches, CCEvent* event)
@@ -154,9 +397,30 @@ void Grid::ccTouchesEnded(CCSet* touches, CCEvent* event)
         location = CCDirector::sharedDirector()->convertToGL(location);
         
         handleTouch( location );
-        //addNewSpriteAtPosition( location );
     }
 }
 
+bool Grid::isLevelComplete()
+{
+    for (int i = 0; i < GRID_ROWS; i++)
+    {
+        for (int j = 0; j < GRID_COLS; j++)
+        {
+            // check each gamePiece in the grid and if all are not visible then return true
+            // otherwise return false
+            GamePiece* gamePieceSprite = gridTable[i][j];
+            if (gamePieceSprite->isVisible())
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
 
-
+void Grid::updateScore()
+{
+    char scoreDisplayString[100];
+    sprintf(scoreDisplayString, "Score: %d", m_score);
+    m_scoreDisplayString->setString(scoreDisplayString);
+}

@@ -23,6 +23,7 @@ public:
     ~Grid();
     
     GamePiece* getGamePieceAtIndex(int row, int col);
+    CCPoint getIndexAtGamePiece(GamePiece* basePiece);
     GamePiece* getGamePieceAtLocation(CCPoint p);
     
     float getWidth();
@@ -31,15 +32,21 @@ public:
     void handleTouch(CCPoint p);
     
     void toggleTouchType();
-    void eliminateGamePieces();
+    int eliminateGamePieces(GamePiece* basePiece, int comboCount);
     
     virtual void ccTouchesEnded(cocos2d::CCSet* touches, cocos2d::CCEvent* event);
     
+    bool isLevelComplete();
+    
+    bool m_IsRecursiveMatchCheck;
+    
 private:
     GamePiece* gridTable[GRID_ROWS][GRID_COLS];
-    
+    static int m_score;
     int touchState;
+    CCLabelTTF* m_scoreDisplayString;
     
+    void updateScore();
 };
 
 #endif /* defined(__ProjectDrumroll__Grid__) */

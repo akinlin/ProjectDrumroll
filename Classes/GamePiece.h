@@ -19,18 +19,23 @@ class GamePiece : public CCSprite
 public:
     GamePiece();
     
-    CCRect getPieceColor();
-    CCRect getInteractionType();
+    int getPieceColor();
+    int getInteractionType();
     
     int getTextureWidth();
     int getTextureHeight();
     
     void switchToRandomPiece();
     
+    bool isInElinationCheck();
+    void setElinationCheck(bool isInEliminationCheck);
+    
 private:
     int s_color;
     int s_interactionType;
     Blocks* m_BlocksSprite;
+    
+    bool m_isInElinationCheck;
 };
 
 #endif /* defined(__ProjectDrumroll__GamePiece__) */

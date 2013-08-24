@@ -15,6 +15,7 @@
 using namespace cocos2d;
 using namespace CocosDenshion;
 
+// TODO: review if this should be part of the spritehelper class
 enum gamePieceColor
 {
     pieceColorYellow = 0,
@@ -32,6 +33,10 @@ enum gamePieceInteractionType
 
 GamePiece::GamePiece()
 {
+    // set elimination state flag
+    // TODO: review if this should be part of a statemachine
+    m_isInElinationCheck = false;
+    
     s_color = arc4random() % gamePieceColorCount;
     s_interactionType = arc4random() % pieceInteractionCount;
     
@@ -47,6 +52,16 @@ GamePiece::GamePiece()
     this->initWithTexture(m_BlocksSprite->getTexture(), m_BlocksSprite->getSpriteRect(s_color));
     this->setScale(VisibleRect::getScale());
     this->autorelease();
+}
+
+int GamePiece::getPieceColor()
+{
+    return s_color;
+}
+
+int GamePiece::getInteractionType()
+{
+    return s_interactionType;
 }
 
 int GamePiece::getTextureWidth()
@@ -70,5 +85,15 @@ void GamePiece::switchToRandomPiece()
         s_color = arc4random() % gamePieceColorCount;
         this->setTextureRect(m_BlocksSprite->getSpriteRect(s_color));
     }
+}
+
+bool GamePiece::isInElinationCheck()
+{
+    return m_isInElinationCheck;
+}
+
+void GamePiece::setElinationCheck(bool isInEliminationCheck)
+{
+    m_isInElinationCheck = isInEliminationCheck;
 }
 
