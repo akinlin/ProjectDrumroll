@@ -18,8 +18,11 @@ enum TouchState
 
 int Grid::m_score = 0;
 
-Grid::Grid()
+Grid::Grid()//GameScene* parentScene)
 {
+    // set the reference to the parent scene
+    //m_parentScene = parentScene;
+    
     // turn on touch events
     setTouchEnabled( true );
     
@@ -41,15 +44,7 @@ Grid::Grid()
     // set content size to grid size, assuming all pieces are the same size
     this->setContentSize(CCSizeMake(gridTable[0][0]->getTextureWidth() * GRID_COLS, gridTable[0][0]->getTextureHeight() * GRID_ROWS));
     
-    touchState = interact;
-    
-    // display the score value (probably needs to be in a HUD class)
-    char scoreDisplayString[100];
-    sprintf(scoreDisplayString, "Score: %d", m_score);
-    m_scoreDisplayString = CCLabelTTF::create(scoreDisplayString, "Arial", VisibleRect::getScaledFont(10));
-    m_scoreDisplayString->setAnchorPoint(CCPointZero);
-    m_scoreDisplayString->setPosition(ccp(getWidth()/2, -VisibleRect::getScaledFont(100)));
-    addChild(m_scoreDisplayString);
+    m_touchState = interact;
 }
 
 Grid::~Grid()
@@ -126,7 +121,7 @@ void Grid::handleTouch(CCPoint p)
             if (gamePieceSprite != NULL)
             {
                 // handle the touch according to touchState
-                if (touchState == interact)
+                if (m_touchState == interact)
                 {
                     // do something with it to test the touch location
                     gamePieceSprite->switchToRandomPiece();
@@ -149,7 +144,6 @@ void Grid::handleTouch(CCPoint p)
                         m_score = m_score + (100*(comboCount+1));
                     }
                 }
-                updateScore();
                 CCLog("Touch handled");
             }
         }
@@ -158,14 +152,29 @@ void Grid::handleTouch(CCPoint p)
 
 void Grid::toggleTouchType()
 {
-    if (touchState == interact)
+    if (m_touchState == interact)
     {
-        touchState = eliminate;
+        m_touchState = eliminate;
     }
     else
     {
-        touchState = interact;
+        m_touchState = interact;
     }
+}
+
+void Grid::setInteractTouchType()
+{
+    m_touchState = interact;
+}
+
+void Grid::setEliminateTouchType()
+{
+    m_touchState = eliminate;
+}
+
+int Grid::getTouchState()
+{
+    return m_touchState;
 }
 
 // TODO: This function is bloated as hell. The logic is expanded for readability and debugging.
@@ -418,9 +427,8 @@ bool Grid::isLevelComplete()
     return true;
 }
 
-void Grid::updateScore()
+int Grid::getCurrentScore()
 {
-    char scoreDisplayString[100];
-    sprintf(scoreDisplayString, "Score: %d", m_score);
-    m_scoreDisplayString->setString(scoreDisplayString);
+    return m_score;
 }
+

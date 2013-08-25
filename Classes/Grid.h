@@ -19,7 +19,7 @@ const int GRID_ROWS = 5;
 class Grid : public CCLayer
 {
 public:
-    Grid();
+    Grid();//GameScene* parentScene);
     ~Grid();
     
     GamePiece* getGamePieceAtIndex(int row, int col);
@@ -32,21 +32,23 @@ public:
     void handleTouch(CCPoint p);
     
     void toggleTouchType();
+    void setInteractTouchType();
+    void setEliminateTouchType();
+    int getTouchState();
     int eliminateGamePieces(GamePiece* basePiece, int comboCount);
     
-    virtual void ccTouchesEnded(cocos2d::CCSet* touches, cocos2d::CCEvent* event);
+    virtual void ccTouchesEnded(CCSet* touches, CCEvent* event);
     
     bool isLevelComplete();
-    
+    int getCurrentScore();
     bool m_IsRecursiveMatchCheck;
     
 private:
     GamePiece* gridTable[GRID_ROWS][GRID_COLS];
     static int m_score;
-    int touchState;
-    CCLabelTTF* m_scoreDisplayString;
+    int m_touchState;
     
-    void updateScore();
+//    GameScene* m_parentScene;
 };
 
 #endif /* defined(__ProjectDrumroll__Grid__) */
