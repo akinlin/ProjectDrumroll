@@ -23,7 +23,18 @@ const std::string menuItem[ITEM_COUNT] =
     "Toogle Touch State"
 };
 
-static int LEVEL = 0;
+enum SceneTags {
+    kTagBackgroundReference = 1,
+    kTagGridReference = 2,
+    kTagHUDReference = 3,
+    kTagButtonMenuTags = 4
+};
+
+enum ButtonMenuTags {
+    kTagInteractButtonReference = 1,
+    kTagEliminationButtonReference = 2,
+    
+};
 
 CCScene* GameScene::scene()
 {
@@ -50,37 +61,12 @@ bool GameScene::init()
         return false;
     }
     
-    // increment the level
-    ++LEVEL;
+    // init level
+    m_currentLevel = 1;
     
-    //add the menu item for back to main menu
-    // removing to replace with HUD controls
-//    m_pItemMenu = CCMenu::create();
-//    for (int i = 0; i < ITEM_COUNT; ++i)
-//    {
-//        CCLabelTTF* label = CCLabelTTF::create(menuItem[i].c_str(), "Arial", VisibleRect::getScaledFont(20));
-//        CCMenuItemLabel* pMenuItem = CCMenuItemLabel::create(label, this, menu_selector(GameScene::menuCallback));
-//        pMenuItem->setAnchorPoint(CCPointZero);
-//        
-//        m_pItemMenu->addChild(pMenuItem, i + 10000);
-//    }
-//    
-//    m_pItemMenu->setContentSize(CCSizeMake(CCDirector::sharedDirector()->getWinSize().width, (ITEM_COUNT + 1) * LINE_SPACE));
-//    m_pItemMenu->setPosition(ccp( CCDirector::sharedDirector()->getWinSize().width - VisibleRect::getScaledFont(200), CCDirector::sharedDirector()->getWinSize().height - VisibleRect::getScaledFont(100)));
-//    m_pItemMenu->alignItemsVerticallyWithPadding(5);
-//    this->addChild(m_pItemMenu, 1);
-    
-    // add a label shows "Game Scene [LEVEL]"
-//    // create and initialize a label
-//    char title[256];
-//    sprintf(title, "Game Scene %d", LEVEL);
-//    CCLabelTTF* pLabel = CCLabelTTF::create(title, "Thonburi", VisibleRect::getScaledFont(34));
-//    // ask director the window size
-//    CCSize size = CCDirector::sharedDirector()->getWinSize();
-//    // position the label on the center of the screen
-//    pLabel->setPosition( ccp(size.width / 2, size.height - VisibleRect::getScaledFont(20)) );
-//    // add the label as a child to this layer
-//    this->addChild(pLabel, 1);
+    // init score
+    m_currentScore = 0;
+    m_scoreCache = 0;
     
     // add background for the main screen"
     m_backgroundReference = CCSprite::create("MainScreen.png");
@@ -88,23 +74,18 @@ bool GameScene::init()
     // position the sprite on the center of the screen
     m_backgroundReference->setPosition( ccp(VisibleRect::getVisibleRect().size.width/2, VisibleRect::getVisibleRect().size.height/2) );
     // add the sprite as a child to this layer
-    this->addChild(m_backgroundReference, 0);
+    addChild(m_backgroundReference, kTagBackgroundReference);
         
     // create and add the grid
-    m_gridReference = new Grid();
-    m_gridReference->setPosition(ccp(CCDirector::sharedDirector()->getWinSize().width/2 - m_gridReference->getWidth()/2, CCDirector::sharedDirector()->getWinSize().height/2 - m_gridReference->getHeight()/2));
-    this->addChild(m_gridReference, 2);
-    
-    // set the background tint to the color of the grid touch state
-    // assuming the interact state is set, should probably check the state and set the color accordingly
-    m_backgroundReference->setColor(ccBLUE);
+    createGrid();
+    addChild(m_gridReference, kTagGridReference);
     
     // create the HUD
     // create and add the grid
     m_hudReference = new HUD();
     m_hudReference->setPosition(CCPointZero);
-    m_hudReference->updateLevel(LEVEL);
-    this->addChild(m_hudReference, 3);
+    m_hudReference->updateLevel(m_currentLevel);
+    this->addChild(m_hudReference, kTagHUDReference);
     
     // create and add the interact and eliminate buttons
     // should probably be in a HUD class
@@ -113,18 +94,18 @@ bool GameScene::init()
     interactButton->setAnchorPoint(CCPointZero);
     interactButton->setPosition(ccp(VisibleRect::getScaledFont(40), 0));
     m_backgroundReference->setScale(VisibleRect::getScale());
-    m_touchStateMenu->addChild(interactButton, 2);
+    m_touchStateMenu->addChild(interactButton, kTagInteractButtonReference);
     
     CCMenuItemImage* eliminateButton = CCMenuItemImage::create("eliminateButton.png", "eliminateButton.png", this, menu_selector(GameScene::menuEliminateCallback));
     eliminateButton->setAnchorPoint(CCPointZero);
     eliminateButton->setPosition(ccp(VisibleRect::getScaledFont(180), 0));
     m_backgroundReference->setScale(VisibleRect::getScale());
-    m_touchStateMenu->addChild(eliminateButton, 1);
+    m_touchStateMenu->addChild(eliminateButton, kTagEliminationButtonReference);
     
     m_touchStateMenu->setContentSize(CCSizeMake(CCDirector::sharedDirector()->getWinSize().width, VisibleRect::getScaledFont(100)));
     m_touchStateMenu->setAnchorPoint(CCPointZero);
     m_touchStateMenu->setPosition(CCPointZero);
-    addChild(m_touchStateMenu, 4);
+    addChild(m_touchStateMenu, kTagButtonMenuTags);
     
     // schedule the level complete check
     schedule( schedule_selector(GameScene::checkForEndOfLevel), 0.2f);
@@ -148,11 +129,10 @@ void GameScene::menuCallback(CCObject* pSender)
     {
         case 0:
             pScene = TitleScene::scene();
-            LEVEL = 0;
             break;
         case 1:
-            pScene = GameScene::scene();
-            m_backgroundReference->setColor(ccBLUE);
+            // go to the next level
+            nextLevel();
             break;
         case 2:
             // change the touch state
@@ -201,22 +181,53 @@ void GameScene::checkForEndOfLevel()
 {
     if (m_gridReference->isLevelComplete())
     {
-        // change to the next level
-        CCScene *pScene = NULL;
-        pScene = GameScene::scene();
-        // run
-        if (pScene)
-        {
-            CCDirector::sharedDirector()->replaceScene(pScene);
-        }
+        // go to the next level
+        nextLevel();
     }
 }
 
 void GameScene::refreshScore()
 {
     // get the score from the grid
-    int currentScore = m_gridReference->getCurrentScore();
+    int levelScore = m_gridReference->getCurrentScore();
+    // add the scoreCache variable, value stored from the previous levels
+    m_currentScore = m_scoreCache + levelScore;
     
     // give it to the HUD
-    m_hudReference->updateScore(currentScore);
+    m_hudReference->updateScore(m_currentScore);
+    
+    CCLog("LEVEL SCORE = %d", levelScore);
+    CCLog("CURR SCORE = %d", m_currentScore);
+    CCLog("SCORE CACHE = %d", m_scoreCache);
+}
+
+void GameScene::createGrid()
+{
+    // create and add the grid
+    m_gridReference = new Grid();
+    m_gridReference->setPosition(ccp(CCDirector::sharedDirector()->getWinSize().width/2 - m_gridReference->getWidth()/2, CCDirector::sharedDirector()->getWinSize().height/2 - m_gridReference->getHeight()/2));
+    
+    // set the background tint to the color of the grid touch state
+    // assuming the interact state is set, should probably check the state and set the color accordingly
+    m_backgroundReference->setColor(ccBLUE);
+}
+
+void GameScene::nextLevel()
+{
+    // remove the grid and create a new one
+    createGrid();
+    removeChildByTag(kTagGridReference);
+    addChild(m_gridReference, kTagGridReference);
+    
+    // increment the level
+    m_currentLevel++;
+    m_hudReference->updateLevel(m_currentLevel);
+    
+    // store the score cache since the score will get reset in the next level
+    storeScoreCache();
+}
+
+void GameScene::storeScoreCache()
+{
+    m_scoreCache = m_currentScore;
 }

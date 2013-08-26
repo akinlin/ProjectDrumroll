@@ -45,7 +45,7 @@ public:
     
 private:
     GamePiece* gridTable[GRID_ROWS][GRID_COLS];
-    static int m_score;
+    int m_score;
     int m_touchState;
     
 //    GameScene* m_parentScene;

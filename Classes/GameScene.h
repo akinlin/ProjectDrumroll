@@ -33,17 +33,39 @@ public:
     CREATE_FUNC(GameScene);
     
 private:
-    // Member Components
+// Member Components
     // Menu to handle the game
     CCMenu* m_pItemMenu;
-    CCMenu* m_touchStateMenu;
+    // Grid where all the gameplay happens
     Grid* m_gridReference;
+        // Eliminate and Interact Buttons (should be in the HUD)
+        CCMenu* m_touchStateMenu;
+    // HUD for displaying information
     HUD* m_hudReference;
+    // Background (Should probably be its own class)
     CCSprite* m_backgroundReference;
     
+    // Level
+    int m_currentLevel;
+    // Score
+    int m_currentScore;
+    int m_scoreCache;
+    
+// Member Management
+    // Level state
     void checkForEndOfLevel();
+    // Score update
     void refreshScore();
+    // Touch state
     void refreshTouchState();
+    
+// Member helper functions
+    // create the gird
+    void createGrid();
+    // change level
+    void nextLevel();
+    // store level cache
+    void storeScoreCache();
 };
 
 #endif /* defined(__ProjectDrumroll__GameScene__) */

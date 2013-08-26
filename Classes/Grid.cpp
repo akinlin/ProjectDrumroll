@@ -16,12 +16,13 @@ enum TouchState
     eliminate = 1
 };
 
-int Grid::m_score = 0;
-
 Grid::Grid()//GameScene* parentScene)
 {
     // set the reference to the parent scene
     //m_parentScene = parentScene;
+    
+    // reset score
+    m_score = 0;
     
     // turn on touch events
     setTouchEnabled( true );
