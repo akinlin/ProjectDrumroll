@@ -195,10 +195,6 @@ void GameScene::refreshScore()
     
     // give it to the HUD
     m_hudReference->updateScore(m_currentScore);
-    
-    CCLog("LEVEL SCORE = %d", levelScore);
-    CCLog("CURR SCORE = %d", m_currentScore);
-    CCLog("SCORE CACHE = %d", m_scoreCache);
 }
 
 void GameScene::createGrid()

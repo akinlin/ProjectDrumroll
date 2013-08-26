@@ -48,7 +48,15 @@ private:
     int m_score;
     int m_touchState;
     
-//    GameScene* m_parentScene;
+    int m_gridWidth;
+    int m_gridHeight;
+    
+    void setPieceLocaiton(int row, int col);
+    // returns the width of the piece referenced with grid padding
+    int getPieceWidth();
+    // returns the height of the piece referenced with grid padding
+    int getPieceHeight();
+    
 };
 
 #endif /* defined(__ProjectDrumroll__Grid__) */

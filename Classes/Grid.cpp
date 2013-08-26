@@ -16,11 +16,10 @@ enum TouchState
     eliminate = 1
 };
 
+const int GRID_SPACE = 10;
+
 Grid::Grid()//GameScene* parentScene)
 {
-    // set the reference to the parent scene
-    //m_parentScene = parentScene;
-    
     // reset score
     m_score = 0;
     
@@ -34,16 +33,29 @@ Grid::Grid()//GameScene* parentScene)
         {
             // create a piece and assign it to the grid location
             GamePiece* gamePieceSprite = new GamePiece();
-            gamePieceSprite->setPosition(ccp(j * gamePieceSprite->getTextureWidth(), i * gamePieceSprite->getTextureHeight()));
+            
+            // set the piece location with space in between
+            //setPieceLocaiton(j,i);
+            int piecePosX = (j * gamePieceSprite->getTextureWidth()) + (VisibleRect::getScaledFont(GRID_SPACE) * j);
+            int piecePoxY = (i * gamePieceSprite->getTextureHeight()) + (VisibleRect::getScaledFont(GRID_SPACE) * i);
+            
+            gamePieceSprite->setPosition(ccp(piecePosX, piecePoxY));
             gamePieceSprite->setAnchorPoint(CCPointZero);
             gridTable[i][j] = gamePieceSprite;
             
             addChild(gridTable[i][j]);
         }
     }
-    this->setAnchorPoint(CCPointZero);
+    // set the anchor point to zero
+    setAnchorPoint(CCPointZero);
+    
+    // set the width and height
+    // just using the size of the first piece to calculate dimensions
+    m_gridWidth = (gridTable[0][0]->getTextureWidth() * GRID_COLS) + (VisibleRect::getScaledFont(GRID_SPACE) * GRID_COLS);
+    m_gridHeight = (gridTable[0][0]->getTextureHeight() * GRID_ROWS) + (VisibleRect::getScaledFont(GRID_SPACE) * GRID_ROWS);
+    
     // set content size to grid size, assuming all pieces are the same size
-    this->setContentSize(CCSizeMake(gridTable[0][0]->getTextureWidth() * GRID_COLS, gridTable[0][0]->getTextureHeight() * GRID_ROWS));
+    setContentSize(CCSizeMake(m_gridWidth, m_gridHeight));
     
     m_touchState = interact;
 }
@@ -71,38 +83,48 @@ GamePiece* Grid::getGamePieceAtIndex(int row, int col)
 
 CCPoint Grid::getIndexAtGamePiece(GamePiece* basePiece)
 {
+    // get the piece global location
     CCPoint globalPostion = basePiece->getPosition();
     CCLog("Global Location row:%f col:%f", globalPostion.y, globalPostion.x);
-    // position of sprite is at the anchor point of sprite
-    int row = globalPostion.y/VisibleRect::getScaledFont(32);
-    int col = globalPostion.x/VisibleRect::getScaledFont(32);
+    
+    // get the referenced piece width and height
+    int pieceWidth = getPieceWidth();
+    int pieceHeight = getPieceHeight();
+    
+    // get the row and col index of the piece
+    int row = globalPostion.y/pieceWidth;
+    int col = globalPostion.x/pieceHeight;
     CCPoint indexPoint = ccp(col,row);
     CCLog("Created Point row:%f col:%f", indexPoint.y, indexPoint.x);
+    
     return indexPoint;
 }
 
 GamePiece* Grid::getGamePieceAtLocation(CCPoint p)
 {
-    // reused code from getIndexAtGamePiece probably should create a funcation for getting the row and col
-    int row = (p.y-getPositionY())/VisibleRect::getScaledFont(32);
-    int col = (p.x-getPositionX())/VisibleRect::getScaledFont(32);
+    // get the referenced piece width and height
+    int pieceWidth = getPieceWidth();
+    int pieceHeight = getPieceHeight();
+    
+    // get the row and col index of the piece
+    int row = (p.y-getPositionY())/pieceWidth;
+    int col = (p.x-getPositionX())/pieceHeight;
     CCLog("ROWCOL: x=%d y=%d", row, col);
     
+    // get the piece at that location
     return getGamePieceAtIndex(row, col);
 }
 
 float Grid::getWidth()
 {
     // assuming all pieces are the same size
-    // just using the first piece to calculate dimentions
-    return this->getContentSize().width;
+    return m_gridWidth;
 }
 
 float Grid::getHeight()
 {
     // assuming all pieces are the same size
-    // just using the first piece to calculate dimentions
-    return this->getContentSize().height;
+    return m_gridHeight;
 }
 
 void Grid::handleTouch(CCPoint p)
@@ -431,5 +453,26 @@ bool Grid::isLevelComplete()
 int Grid::getCurrentScore()
 {
     return m_score;
+}
+
+void Grid::setPieceLocaiton(int row, int col)
+{
+    
+}
+
+// returns the width of the piece referenced with grid padding
+// assumes all pieces are the same size
+int Grid::getPieceWidth()
+{
+    GamePiece* pieceReference = gridTable[0][0];
+    return pieceReference->getTextureWidth() + VisibleRect::getScaledFont(GRID_SPACE);
+}
+
+// returns the height of the piece referenced with grid padding
+// assumes all pieces are the same size
+int Grid::getPieceHeight()
+{
+    GamePiece* pieceReference = gridTable[0][0];
+    return pieceReference->getTextureHeight() + VisibleRect::getScaledFont(GRID_SPACE);
 }
 
