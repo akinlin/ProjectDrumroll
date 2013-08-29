@@ -13,6 +13,7 @@
 #include "cocos2d.h"
 #include "Grid.h"
 #include "HUD.h"
+#include "Goals.h"
 USING_NS_CC;
 
 class GameScene : public CCLayer
@@ -44,6 +45,8 @@ private:
     HUD* m_hudReference;
     // Background (Should probably be its own class)
     CCSprite* m_backgroundReference;
+    // goals tab reference
+    Goals* m_goalsTab;
     
     // Level
     int m_currentLevel;

@@ -18,7 +18,7 @@ enum TouchState
 
 const int GRID_SPACE = 10;
 
-Grid::Grid()//GameScene* parentScene)
+Grid::Grid()
 {
     // reset score
     m_score = 0;
@@ -35,9 +35,12 @@ Grid::Grid()//GameScene* parentScene)
             GamePiece* gamePieceSprite = new GamePiece();
             
             // set the piece location with space in between
-            //setPieceLocaiton(j,i);
-            int piecePosX = (j * gamePieceSprite->getTextureWidth()) + (VisibleRect::getScaledFont(GRID_SPACE) * j);
-            int piecePoxY = (i * gamePieceSprite->getTextureHeight()) + (VisibleRect::getScaledFont(GRID_SPACE) * i);
+            // set piece width and height (assuming all are the same size)
+            m_pieceTextureWidth = gamePieceSprite->getTextureWidth();
+            m_pieceTextureHeight = gamePieceSprite->getTextureHeight();
+
+            int piecePosX = (j * m_pieceTextureWidth) + (VisibleRect::getScaledFont(GRID_SPACE) * j);
+            int piecePoxY = (i * m_pieceTextureHeight) + (VisibleRect::getScaledFont(GRID_SPACE) * i);
             
             gamePieceSprite->setPosition(ccp(piecePosX, piecePoxY));
             gamePieceSprite->setAnchorPoint(CCPointZero);
@@ -51,8 +54,8 @@ Grid::Grid()//GameScene* parentScene)
     
     // set the width and height
     // just using the size of the first piece to calculate dimensions
-    m_gridWidth = (gridTable[0][0]->getTextureWidth() * GRID_COLS) + (VisibleRect::getScaledFont(GRID_SPACE) * GRID_COLS);
-    m_gridHeight = (gridTable[0][0]->getTextureHeight() * GRID_ROWS) + (VisibleRect::getScaledFont(GRID_SPACE) * GRID_ROWS);
+    m_gridWidth = (m_pieceTextureWidth * GRID_COLS) + (VisibleRect::getScaledFont(GRID_SPACE) * GRID_COLS);
+    m_gridHeight = (m_pieceTextureHeight * GRID_ROWS) + (VisibleRect::getScaledFont(GRID_SPACE) * GRID_ROWS);
     
     // set content size to grid size, assuming all pieces are the same size
     setContentSize(CCSizeMake(m_gridWidth, m_gridHeight));
@@ -143,28 +146,33 @@ void Grid::handleTouch(CCPoint p)
             
             if (gamePieceSprite != NULL)
             {
-                // handle the touch according to touchState
-                if (m_touchState == interact)
+                if (gamePieceSprite->isVisible())
                 {
-                    // do something with it to test the touch location
-                    gamePieceSprite->switchToRandomPiece();
-                    
-                    // take away 5 points for every touch
-                    m_score = m_score - 5;
-                }
-                else
-                {
-                    // do something with it to test the touch location
-                    int comboCount = eliminateGamePieces(gamePieceSprite,0);
-                    if (comboCount == 0)
+                    // handle the touch according to touchState
+                    if (m_touchState == interact)
                     {
-                        // only one piece was eliminated
-                        m_score = m_score - 150;
+                        // do something with it to test the touch location
+                        gamePieceSprite->switchToRandomPiece();
+                        
+                        // take away 5 points for every touch
+                        m_score = m_score - 5;
                     }
                     else
                     {
-                        // a combo of two or more was created
-                        m_score = m_score + (100*(comboCount+1));
+                        // do something with it to test the touch location
+                        int comboCount = eliminateGamePieces(gamePieceSprite,0);
+                        // reset the pieces in the grid
+                        recalculateGrid();
+                        if (comboCount == 0)
+                        {
+                            // only one piece was eliminated
+                            m_score = m_score - 150;
+                        }
+                        else
+                        {
+                            // a combo of two or more was created
+                            m_score = m_score + (100*(comboCount+1));
+                        }
                     }
                 }
                 CCLog("Touch handled");
@@ -208,7 +216,7 @@ int Grid::eliminateGamePieces(GamePiece* basePiece, int comboCount)
     // check all linked pieces and remove them
     // run a recursive function checking for matching pieces in the following order:
     // up, right, down, left (clockwise)
-    if(basePiece != NULL && basePiece->isVisible())
+    if(basePiece != NULL)
     {
         // set the flag to indicate the piece is in an eliminate loop check
         basePiece->setElinationCheck(true);
@@ -227,11 +235,11 @@ int Grid::eliminateGamePieces(GamePiece* basePiece, int comboCount)
         if (aboveRow > 0 && aboveRow < GRID_ROWS)
         {
             GamePiece* abovePiece = getGamePieceAtIndex(aboveRow, basePieceindex.x);
-            CCPoint abovePieceLocation = abovePiece->getPosition();
-            CCLog("Actual above piece row:%f col:%f", abovePieceLocation.y, abovePieceLocation.x);
             // first make sure the piece hasn't already been checked
             if (abovePiece != NULL)
             {
+                CCPoint abovePieceLocation = abovePiece->getPosition();
+                CCLog("Actual above piece row:%f col:%f", abovePieceLocation.y, abovePieceLocation.x);
                 if (!abovePiece->isInElinationCheck())
                 {
                     if (basePiece->getPieceColor() == abovePiece->getPieceColor())
@@ -399,6 +407,7 @@ int Grid::eliminateGamePieces(GamePiece* basePiece, int comboCount)
         // try just deleting it (hopefully the rest of the code has checks for valid pieces)
         //delete basePiece;
         basePiece->setVisible(false);
+        basePiece->setActive(false);
         
         CCLog("COMBO COUNT: %d", comboCount);
     }
@@ -464,15 +473,76 @@ void Grid::setPieceLocaiton(int row, int col)
 // assumes all pieces are the same size
 int Grid::getPieceWidth()
 {
-    GamePiece* pieceReference = gridTable[0][0];
-    return pieceReference->getTextureWidth() + VisibleRect::getScaledFont(GRID_SPACE);
+    return m_pieceTextureWidth + VisibleRect::getScaledFont(GRID_SPACE);
 }
 
 // returns the height of the piece referenced with grid padding
 // assumes all pieces are the same size
 int Grid::getPieceHeight()
 {
-    GamePiece* pieceReference = gridTable[0][0];
-    return pieceReference->getTextureHeight() + VisibleRect::getScaledFont(GRID_SPACE);
+    return m_pieceTextureHeight + VisibleRect::getScaledFont(GRID_SPACE);
+}
+
+// remove the pieces that are not active and drop the pieces above
+void Grid::recalculateGrid()
+{
+    // run through each column and move all of the pieces down if non-active pieces are below
+    CCPoint firstNonActive;
+    CCPoint firstNonActivePosition = CCPointZero;
+    for (int i = 0; i < GRID_COLS; i++)
+    {
+        // reset the point
+        firstNonActive = ccp(-1,-1);
+        for (int j = 0; j < GRID_ROWS; j++)
+        {
+            // check if the piece is not active
+            if (!gridTable[j][i]->isActive())
+            {
+                // found a non active piece set the firstNoActive Point if not already set
+                if (firstNonActive.x == -1)
+                {
+                    firstNonActive = ccp(j,i);
+                    firstNonActivePosition = gridTable[j][i]->getPosition();
+                }
+                // remove the child and clear the pointer
+                // (no need to delete since it will be taken care of when grid is destroyed)
+                //removeChild(gridTable[j][j]);
+                //gridTable[j][i] = NULL;
+            }
+            else
+            {
+                // piece is active check if point is set
+                if (firstNonActive.x != -1)
+                {
+                    // switch the piece to the new table reference
+                    int row = firstNonActive.x;
+                    int col = firstNonActive.y;
+                    // goofy test
+                    gridTable[row][col]->setPosition(gridTable[j][i]->getPosition());
+                              
+                    // move the piece to the firstNonActive location
+                    gridTable[j][i]->setPosition(firstNonActivePosition);
+                    //gridTable[j][i]->setPosition(ccp(0, 32 * j));
+                    
+                    // extended goofy test
+                    GamePiece* emptySpace = gridTable[row][col];
+                    gridTable[row][col] = gridTable[j][i];
+                    gridTable[j][i] = emptySpace;
+                    
+                    // update the firstNonActive point
+                    CCPoint testPoint = gridTable[row][col]->getPosition();
+                    row++;
+                    if (row < GRID_ROWS)
+                    {
+                        firstNonActive = ccp(row, col);
+                        firstNonActivePosition = ccp(firstNonActivePosition.x, getPieceHeight()*row);
+                    }
+                    
+                    // reset the old reference
+                    //gridTable[j][i] = NULL;
+                }
+            }
+        }
+    }
 }
 

@@ -36,6 +36,8 @@ GamePiece::GamePiece()
     // set elimination state flag
     // TODO: review if this should be part of a statemachine
     m_isInElinationCheck = false;
+    // set the active flag
+    m_isActive = true;
     
     s_color = arc4random() % gamePieceColorCount;
     s_interactionType = arc4random() % pieceInteractionCount;
@@ -97,3 +99,12 @@ void GamePiece::setElinationCheck(bool isInEliminationCheck)
     m_isInElinationCheck = isInEliminationCheck;
 }
 
+bool GamePiece::isActive()
+{
+    return m_isActive;
+}
+
+void GamePiece::setActive(bool isActive)
+{
+    m_isActive = isActive;
+}

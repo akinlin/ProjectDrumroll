@@ -19,7 +19,7 @@ const int GRID_ROWS = 5;
 class Grid : public CCLayer
 {
 public:
-    Grid();//GameScene* parentScene);
+    Grid();
     ~Grid();
     
     GamePiece* getGamePieceAtIndex(int row, int col);
@@ -50,12 +50,17 @@ private:
     
     int m_gridWidth;
     int m_gridHeight;
+    int m_pieceTextureWidth;
+    int m_pieceTextureHeight;
     
     void setPieceLocaiton(int row, int col);
     // returns the width of the piece referenced with grid padding
     int getPieceWidth();
     // returns the height of the piece referenced with grid padding
     int getPieceHeight();
+    
+    // after an elimination move, reset the grid after gravity drop
+    void recalculateGrid();
     
 };
 

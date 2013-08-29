@@ -27,7 +27,8 @@ enum SceneTags {
     kTagBackgroundReference = 1,
     kTagGridReference = 2,
     kTagHUDReference = 3,
-    kTagButtonMenuTags = 4
+    kTagButtonMenu = 4,
+    kTagGoalstab
 };
 
 enum ButtonMenuTags {
@@ -105,7 +106,11 @@ bool GameScene::init()
     m_touchStateMenu->setContentSize(CCSizeMake(CCDirector::sharedDirector()->getWinSize().width, VisibleRect::getScaledFont(100)));
     m_touchStateMenu->setAnchorPoint(CCPointZero);
     m_touchStateMenu->setPosition(CCPointZero);
-    addChild(m_touchStateMenu, kTagButtonMenuTags);
+    addChild(m_touchStateMenu, kTagButtonMenu);
+    
+    // Add the goals tab
+    m_goalsTab = new Goals();
+    addChild(m_goalsTab, kTagGoalstab);
     
     // schedule the level complete check
     schedule( schedule_selector(GameScene::checkForEndOfLevel), 0.2f);

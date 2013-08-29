@@ -30,12 +30,16 @@ public:
     bool isInElinationCheck();
     void setElinationCheck(bool isInEliminationCheck);
     
+    bool isActive();
+    void setActive(bool isActive);
+    
 private:
     int s_color;
     int s_interactionType;
     Blocks* m_BlocksSprite;
     
     bool m_isInElinationCheck;
+    bool m_isActive;
 };
 
 #endif /* defined(__ProjectDrumroll__GamePiece__) */
