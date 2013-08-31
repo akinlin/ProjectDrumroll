@@ -25,6 +25,28 @@ Goals::Goals()
     m_goalsWidth = goalsTabSize.width;
     m_goalsHeight = goalsTabSize.height;
     
+    // goals list
+    goal_1 = CCLabelTTF::create("Interact less then 40 times", "Arial", VisibleRect::getScaledFont(15));
+    goal_2 = CCLabelTTF::create("Score more than 1000 points", "Arial", VisibleRect::getScaledFont(15));
+    goal_3 = CCLabelTTF::create("Get a combo larger than 5x", "Arial", VisibleRect::getScaledFont(15));
+    goal_1->setAnchorPoint(CCPointZero);
+    goal_2->setAnchorPoint(CCPointZero);
+    goal_3->setAnchorPoint(CCPointZero);
+    goal_1->setColor(ccBLACK);
+    goal_2->setColor(ccBLACK);
+    goal_3->setColor(ccBLACK);
+    
+    // set the goal locations
+    int xPos = goalsTab->getPositionX();
+    int yPos = goalsTab->getPositionY();
+    goal_1->setPosition(ccp(xPos + 10,yPos + goalsTabSize.height - 20));
+    goal_2->setPosition(ccp(xPos + 10,yPos + goalsTabSize.height - 40));
+    goal_3->setPosition(ccp(xPos + 10,yPos + goalsTabSize.height - 60));
+    
+    addChild(goal_1);
+    addChild(goal_2);
+    addChild(goal_3);
+    
     m_isDrawerAjar = false;
 }
 
@@ -57,16 +79,26 @@ void Goals::handleTouch(CCPoint p)
             // touch location is on the goals tab slide the tab out
             CCSize screenSize = VisibleRect::getVisibleRect().size;
             CCSize goalsTabSize = goalsTab->getTextureRect().size;
+            int xPos = goalsTab->getPositionX();
+            int yPos = goalsTab->getPositionY();
             
             if (!m_isDrawerAjar)
             {
                 goalsTab->setPosition(ccp(screenSize.width - goalsTabSize.width, (screenSize.height - goalsTabSize.height)/2));
                 m_isDrawerAjar = true;
+                
+//                goal_1->setPosition(ccp(xPos + goalsTabSize.width + 10,yPos + goalsTabSize.height - 20));
+//                goal_2->setPosition(ccp(xPos + goalsTabSize.width + 10,yPos + goalsTabSize.height - 40));
+//                goal_3->setPosition(ccp(xPos + goalsTabSize.width + 10,yPos + goalsTabSize.height - 60));
             }
             else
             {
                 goalsTab->setPosition(ccp(screenSize.width - 50, (screenSize.height - goalsTabSize.height)/2));
                 m_isDrawerAjar = false;
+                
+                goal_1->setPosition(ccp(xPos + 10,yPos + goalsTabSize.height - 20));
+                goal_2->setPosition(ccp(xPos + 10,yPos + goalsTabSize.height - 40));
+                goal_3->setPosition(ccp(xPos + 10,yPos + goalsTabSize.height - 60));
             }
             
             CCLog("Goals Touch handled");

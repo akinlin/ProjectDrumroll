@@ -30,6 +30,9 @@ private:
     int m_goalsHeight;
     
     CCSprite* goalsTab;
+    CCLabelTTF* goal_1;
+    CCLabelTTF* goal_2;
+    CCLabelTTF* goal_3;
     
     bool m_isDrawerAjar;
 };
