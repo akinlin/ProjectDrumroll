@@ -53,12 +53,18 @@ private:
     // Score
     int m_currentScore;
     int m_scoreCache;
+    // Combo
+    int m_highestCombo;
+    // Interaction count
+    int m_interactionCount;
     
 // Member Management
     // Level state
     void checkForEndOfLevel();
     // Score update
     void refreshScore();
+    // Goals udpate
+    void updateGoals();
     // Touch state
     void refreshTouchState();
     

@@ -41,6 +41,8 @@ public:
     
     bool isLevelComplete();
     int getCurrentScore();
+    int getInteractionCount();
+    int getComboCount();
     bool m_IsRecursiveMatchCheck;
     
 private:
@@ -52,6 +54,8 @@ private:
     int m_gridHeight;
     int m_pieceTextureWidth;
     int m_pieceTextureHeight;
+    int m_highComboCount;
+    int m_interactionCount;
     
     void setPieceLocaiton(int row, int col);
     // returns the width of the piece referenced with grid padding

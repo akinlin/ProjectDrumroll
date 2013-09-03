@@ -22,6 +22,8 @@ Grid::Grid()
 {
     // reset score
     m_score = 0;
+    m_highComboCount  = 0;
+    m_interactionCount = 0;
     
     // turn on touch events
     setTouchEnabled( true );
@@ -156,6 +158,9 @@ void Grid::handleTouch(CCPoint p)
                         
                         // take away 5 points for every touch
                         m_score = m_score - 5;
+                        
+                        // increment the interaction count
+                        m_interactionCount++;
                     }
                     else
                     {
@@ -172,6 +177,12 @@ void Grid::handleTouch(CCPoint p)
                         {
                             // a combo of two or more was created
                             m_score = m_score + (100*(comboCount+1));
+                        }
+                        
+                        // set the high combo
+                        if (comboCount > m_highComboCount)
+                        {
+                            m_highComboCount = comboCount;
                         }
                     }
                 }
@@ -462,6 +473,16 @@ bool Grid::isLevelComplete()
 int Grid::getCurrentScore()
 {
     return m_score;
+}
+
+int Grid::getInteractionCount()
+{
+    return m_interactionCount;
+}
+
+int Grid::getComboCount()
+{
+    return m_highComboCount;
 }
 
 void Grid::setPieceLocaiton(int row, int col)

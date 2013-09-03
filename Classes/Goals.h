@@ -12,6 +12,23 @@
 #include "cocos2d.h"
 USING_NS_CC;
 
+// Right now this is purely a display item. GoalsTab will have the logic for completed goals
+class GoalItem : public CCLayer
+{
+public:
+    GoalItem(CCLabelTTF* goalText, bool isGoalComplete);
+    ~GoalItem();
+    
+    void setIsGoalComplete(bool isGoalComplete);
+    bool getIsGoalComplete();
+    
+private:
+    CCSprite* m_goalIcon;
+    CCLabelTTF* m_goalText;
+    
+    bool m_goalComplete;
+};
+
 class Goals : public CCLayer
 {
 public:
@@ -25,14 +42,20 @@ public:
     
     virtual void ccTouchesEnded(CCSet* touches, CCEvent* event);
     
+    // set and get goal status (probably need to review how this is done)
+    void setGoalStatus(bool goalStatus, int goalIndex);
+    bool getGoalStatus(int goalIndex);
+    
 private:
     int m_goalsWidth;
     int m_goalsHeight;
+    int scoreTextOffsetX;
+    int scoreTextOffsetY;
     
     CCSprite* goalsTab;
-    CCLabelTTF* goal_1;
-    CCLabelTTF* goal_2;
-    CCLabelTTF* goal_3;
+    GoalItem* goal_1;
+    GoalItem* goal_2;
+    GoalItem* goal_3;
     
     bool m_isDrawerAjar;
 };

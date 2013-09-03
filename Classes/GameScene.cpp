@@ -69,6 +69,11 @@ bool GameScene::init()
     m_currentScore = 0;
     m_scoreCache = 0;
     
+    // init combo
+    m_highestCombo = 0;
+    // init interaction count
+    m_interactionCount = 0;
+    
     // add background for the main screen"
     m_backgroundReference = CCSprite::create("MainScreen.png");
     m_backgroundReference->setScale(VisibleRect::getScale());
@@ -116,6 +121,8 @@ bool GameScene::init()
     schedule( schedule_selector(GameScene::checkForEndOfLevel), 0.2f);
     // schedule the score check
     schedule( schedule_selector(GameScene::refreshScore), 0.2f);
+    // schedule the goals check
+    schedule( schedule_selector(GameScene::updateGoals), 0.2f);
     
     return true;
 }
@@ -200,6 +207,69 @@ void GameScene::refreshScore()
     
     // give it to the HUD
     m_hudReference->updateScore(m_currentScore);
+}
+
+void GameScene::updateGoals()
+{
+    // check each of the goals and update state
+    // hard coded checks
+    if (m_goalsTab->getGoalStatus(0))
+    {
+        //CCLog("Interaction Count: %d", m_gridReference->getInteractionCount());
+        // icon is green
+        if (m_gridReference->getInteractionCount() > 40)
+        {
+            // strong coupling with the knowledge that this is the '0' index should change
+            m_goalsTab->setGoalStatus(false, 0);
+        }
+    }
+    else
+    {
+        // icon is red
+        if (m_gridReference->getInteractionCount() < 40)
+        {
+            // strong coupling with the knowledge that this is the '0' index should change
+            m_goalsTab->setGoalStatus(true, 0);
+        }
+    }
+    
+    if (m_goalsTab->getGoalStatus(1))
+    {
+        // icon is green
+        if (m_gridReference->getCurrentScore() < 1000)
+        {
+            // strong coupling with the knowledge that this is the '0' index should change
+            m_goalsTab->setGoalStatus(false, 0);
+        }
+    }
+    else
+    {
+        // icon is red
+        if (m_gridReference->getCurrentScore() > 1000)
+        {
+            // strong coupling with the knowledge that this is the '0' index should change
+            m_goalsTab->setGoalStatus(true, 0);
+        }
+    }
+    
+    if (m_goalsTab->getGoalStatus(2))
+    {
+        // icon is green
+        if (m_gridReference->getComboCount() < 5)
+        {
+            // strong coupling with the knowledge that this is the '0' index should change
+            m_goalsTab->setGoalStatus(false, 0);
+        }
+    }
+    else
+    {
+        // icon is red
+        if (m_gridReference->getComboCount() > 5)
+        {
+            // strong coupling with the knowledge that this is the '0' index should change
+            m_goalsTab->setGoalStatus(true, 0);
+        }
+    }
 }
 
 void GameScene::createGrid()
