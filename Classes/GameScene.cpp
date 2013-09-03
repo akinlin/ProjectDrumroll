@@ -193,8 +193,18 @@ void GameScene::checkForEndOfLevel()
 {
     if (m_gridReference->isLevelComplete())
     {
-        // go to the next level
-        nextLevel();
+        // check to see if all the goals are complete
+        if (m_goalsTab->areGoalsComplete())
+        {
+            // go to the next level
+            nextLevel();
+        }
+        else
+        {
+            // end the game (go back to main menu)
+            CCScene *pScene = TitleScene::scene();
+            CCDirector::sharedDirector()->replaceScene(pScene);
+        }
     }
 }
 
@@ -226,7 +236,7 @@ void GameScene::updateGoals()
     else
     {
         // icon is red
-        if (m_gridReference->getInteractionCount() < 40)
+        if (m_gridReference->getInteractionCount() <= 40)
         {
             // strong coupling with the knowledge that this is the '0' index should change
             m_goalsTab->setGoalStatus(true, 0);
@@ -239,16 +249,16 @@ void GameScene::updateGoals()
         if (m_gridReference->getCurrentScore() < 1000)
         {
             // strong coupling with the knowledge that this is the '0' index should change
-            m_goalsTab->setGoalStatus(false, 0);
+            m_goalsTab->setGoalStatus(false, 1);
         }
     }
     else
     {
         // icon is red
-        if (m_gridReference->getCurrentScore() > 1000)
+        if (m_gridReference->getCurrentScore() >= 1000)
         {
             // strong coupling with the knowledge that this is the '0' index should change
-            m_goalsTab->setGoalStatus(true, 0);
+            m_goalsTab->setGoalStatus(true, 1);
         }
     }
     
@@ -258,7 +268,7 @@ void GameScene::updateGoals()
         if (m_gridReference->getComboCount() < 5)
         {
             // strong coupling with the knowledge that this is the '0' index should change
-            m_goalsTab->setGoalStatus(false, 0);
+            m_goalsTab->setGoalStatus(false, 2);
         }
     }
     else
@@ -267,7 +277,7 @@ void GameScene::updateGoals()
         if (m_gridReference->getComboCount() > 5)
         {
             // strong coupling with the knowledge that this is the '0' index should change
-            m_goalsTab->setGoalStatus(true, 0);
+            m_goalsTab->setGoalStatus(true, 2);
         }
     }
 }

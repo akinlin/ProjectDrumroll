@@ -45,6 +45,8 @@ public:
     // set and get goal status (probably need to review how this is done)
     void setGoalStatus(bool goalStatus, int goalIndex);
     bool getGoalStatus(int goalIndex);
+    // return true if the all the goals are complete/false if any are false
+    bool areGoalsComplete();
     
 private:
     int m_goalsWidth;

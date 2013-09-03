@@ -9,6 +9,20 @@
 #include "Goals.h"
 #include "ScreenHelper.h"
 
+// TODO: review if this should be part of the spritehelper class
+enum goalTab
+{
+    goal_1Tag = 0,
+    goal_2Tag = 1,
+    goal_3Tag = 2
+};
+
+enum goalTabItems
+{
+    tab_textTag = 0,
+    tab_iconTag = 1
+};
+
 Goals::Goals()
 {
     // turn on touch events
@@ -45,9 +59,9 @@ Goals::Goals()
     goal_2->setPosition(ccp(xPos + scoreTextOffsetX,yPos + goalsTabSize.height - scoreTextOffsetY * 2));
     goal_3->setPosition(ccp(xPos + scoreTextOffsetX,yPos + goalsTabSize.height - scoreTextOffsetY * 3));
     
-    addChild(goal_1);
-    addChild(goal_2);
-    addChild(goal_3);
+    addChild(goal_1, goal_1Tag);
+    addChild(goal_2, goal_2Tag);
+    addChild(goal_3, goal_3Tag);
     
     m_isDrawerAjar = false;
 }
@@ -160,6 +174,27 @@ bool Goals::getGoalStatus(int goalIndex)
     }
 }
 
+bool Goals::areGoalsComplete()
+{
+    // check all the goals and return false if any are not complete
+    if (!goal_1->getIsGoalComplete())
+    {
+        return false;
+    }
+    
+    if (!goal_2->getIsGoalComplete())
+    {
+        return false;
+    }
+    
+    if (!goal_3->getIsGoalComplete())
+    {
+        return false;
+    }
+    
+    return true;
+}
+
 void Goals::ccTouchesEnded(CCSet* touches, CCEvent* event)
 {
     //Add a new body/atlas sprite at the touched location
@@ -186,16 +221,16 @@ GoalItem::GoalItem(CCLabelTTF* goalText, bool isGoalComplete)
 {
     m_goalText = goalText;
     m_goalText->setColor(ccBLACK);
-    setIsGoalComplete(isGoalComplete);
-
-    m_goalIcon->setScale(VisibleRect::getScale());
-    m_goalIcon->setAnchorPoint(CCPointZero);
     m_goalText->setAnchorPoint(CCPointZero);
-    
     m_goalText->setPositionX(VisibleRect::getScaledFont(20) + VisibleRect::getScaledFont(10));
     
-    addChild(m_goalText);
-    addChild(m_goalIcon);
+    m_goalComplete = true;
+    m_goalIcon = CCSprite::create("goalComplete.png");
+    m_goalIcon->setScale(VisibleRect::getScale());
+    m_goalIcon->setAnchorPoint(CCPointZero);
+    
+    addChild(m_goalText, tab_textTag);
+    addChild(m_goalIcon, tab_iconTag);
 }
 
 GoalItem::~GoalItem()
@@ -209,11 +244,11 @@ void GoalItem::setIsGoalComplete(bool isGoalComplete)
     
     if (isGoalComplete)
     {
-        m_goalIcon = CCSprite::create("goalComplete.png");
+        m_goalIcon->setTexture(CCTextureCache::sharedTextureCache()->addImage("goalComplete.png"));
     }
     else
     {
-        m_goalIcon = CCSprite::create("goalFailed.png");
+        m_goalIcon->setTexture(CCTextureCache::sharedTextureCache()->addImage("goalFailed.png"));
     }
 }
 
