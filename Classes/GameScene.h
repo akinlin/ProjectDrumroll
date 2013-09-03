@@ -67,6 +67,8 @@ private:
     void updateGoals();
     // Touch state
     void refreshTouchState();
+    // void update all
+    void updateAll();
     
 // Member helper functions
     // create the gird

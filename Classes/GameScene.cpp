@@ -117,12 +117,8 @@ bool GameScene::init()
     m_goalsTab = new Goals();
     addChild(m_goalsTab, kTagGoalstab);
     
-    // schedule the level complete check
-    schedule( schedule_selector(GameScene::checkForEndOfLevel), 0.2f);
-    // schedule the score check
-    schedule( schedule_selector(GameScene::refreshScore), 0.2f);
-    // schedule the goals check
-    schedule( schedule_selector(GameScene::updateGoals), 0.2f);
+    // schedule the update check
+    schedule( schedule_selector(GameScene::updateAll), 0.2f);
     
     return true;
 }
@@ -280,6 +276,18 @@ void GameScene::updateGoals()
             m_goalsTab->setGoalStatus(true, 2);
         }
     }
+}
+
+void GameScene::updateAll()
+{
+    // update goals
+    updateGoals();
+    
+    // update score
+    refreshScore();
+    
+    // check for the end of the level (grid returns complete when all pieces are gone)
+    checkForEndOfLevel();
 }
 
 void GameScene::createGrid()
