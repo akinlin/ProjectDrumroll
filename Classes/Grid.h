@@ -37,7 +37,11 @@ public:
     int getTouchState();
     int eliminateGamePieces(GamePiece* basePiece, int comboCount);
     
-    virtual void ccTouchesEnded(CCSet* touches, CCEvent* event);
+    // touch functions
+    virtual void ccTouchesBegan(CCSet *pTouches, CCEvent *pEvent);
+    virtual void ccTouchesMoved(CCSet *pTouches, CCEvent *pEvent);
+    virtual void ccTouchesEnded(CCSet *pTouches, CCEvent *pEvent);
+    virtual void ccTouchesCancelled(CCSet *pTouches, CCEvent *pEvent);
     
     bool isLevelComplete();
     int getCurrentScore();
@@ -49,6 +53,8 @@ private:
     GamePiece* gridTable[GRID_ROWS][GRID_COLS];
     int m_score;
     int m_touchState;
+    int m_interactionState;
+    GamePiece* m_interactionGamePiece;
     
     int m_gridWidth;
     int m_gridHeight;
@@ -66,6 +72,12 @@ private:
     // after an elimination move, reset the grid after gravity drop
     void recalculateGrid();
     
+    // interaction handling functions
+    void handleSlideMove(CCPoint location);
+    void handleRotaryMove(CCPoint location);
+    void handleSwitchInteraction(GamePiece* gamePieceSprite);
+    void handleFlipInteraction(GamePiece* gamePieceSprite);
+    void handleDPadFlipInteraction(GamePiece* gamePieceSprite);
 };
 
 #endif /* defined(__ProjectDrumroll__Grid__) */

@@ -18,6 +18,7 @@ class GamePiece : public CCSprite
 {
 public:
     GamePiece();
+    //GamePiece(GamePiece& gamePiece);
     
     int getPieceColor();
     int getInteractionType();
@@ -26,6 +27,7 @@ public:
     int getTextureHeight();
     
     void switchToRandomPiece();
+    void switchToNextPiece();
     
     bool isInElinationCheck();
     void setElinationCheck(bool isInEliminationCheck);
@@ -37,6 +39,7 @@ private:
     int s_color;
     int s_interactionType;
     Blocks* m_BlocksSprite;
+    CCLabelTTF* m_interactionSprite;
     
     bool m_isInElinationCheck;
     bool m_isActive;

@@ -16,6 +16,17 @@ enum TouchState
     eliminate = 1
 };
 
+enum InteractionState
+{
+    is_empty = 0,
+    is_slide = 1,
+    is_rotary = 2,
+    is_switch = 3,
+    is_dpadflip = 4,
+    is_flip = 5,
+    is_count = 6
+};
+
 const int GRID_SPACE = 10;
 
 Grid::Grid()
@@ -63,6 +74,8 @@ Grid::Grid()
     setContentSize(CCSizeMake(m_gridWidth, m_gridHeight));
     
     m_touchState = interact;
+    m_interactionState = is_empty;
+    m_interactionGamePiece = NULL;
 }
 
 Grid::~Grid()
@@ -83,7 +96,11 @@ Grid::~Grid()
 
 GamePiece* Grid::getGamePieceAtIndex(int row, int col)
 {
-    return gridTable[row][col];
+    if (row < GRID_ROWS && row >= 0 && col < GRID_COLS && col >= 0)
+    {
+        return gridTable[row][col];
+    }
+    return NULL;
 }
 
 CCPoint Grid::getIndexAtGamePiece(GamePiece* basePiece)
@@ -107,17 +124,26 @@ CCPoint Grid::getIndexAtGamePiece(GamePiece* basePiece)
 
 GamePiece* Grid::getGamePieceAtLocation(CCPoint p)
 {
-    // get the referenced piece width and height
-    int pieceWidth = getPieceWidth();
-    int pieceHeight = getPieceHeight();
-    
-    // get the row and col index of the piece
-    int row = (p.y-getPositionY())/pieceWidth;
-    int col = (p.x-getPositionX())/pieceHeight;
-    CCLog("ROWCOL: x=%d y=%d", row, col);
-    
-    // get the piece at that location
-    return getGamePieceAtIndex(row, col);
+    // check if location is within grid bounds
+    if (getPositionX() <= p.x && getPositionX() + getWidth() >= p.x)
+    {
+        if (getPositionY() <= p.y && getPositionY() + getHeight() >= p.y)
+        {
+            // touch location is within the grid
+            // get the referenced piece width and height
+            int pieceWidth = getPieceWidth();
+            int pieceHeight = getPieceHeight();
+            
+            // get the row and col index of the piece
+            int row = (p.y-getPositionY())/pieceWidth;
+            int col = (p.x-getPositionX())/pieceHeight;
+            CCLog("ROWCOL: x=%d y=%d", row, col);
+            
+            // get the piece at that location
+            return getGamePieceAtIndex(row, col);
+        }
+    }
+    return NULL;
 }
 
 float Grid::getWidth()
@@ -136,59 +162,93 @@ void Grid::handleTouch(CCPoint p)
 {
     CCLog("Touch_X = %d", p.x);
     CCLog("Touch_Y = %d", p.y);
-    // check if location is within grid bounds
-    if (getPositionX() <= p.x && getPositionX() + getWidth() >= p.x)
+            
+    // find the piece selected
+    GamePiece* gamePieceSprite = getGamePieceAtLocation(p);
+    if (gamePieceSprite != NULL)
     {
-        if (getPositionY() <= p.y && getPositionY() + getHeight() >= p.y)
+        if (gamePieceSprite->isVisible())
         {
-            // touch location is within the grid
-            
-            // find the piece selected
-            GamePiece* gamePieceSprite = getGamePieceAtLocation(p);
-            
-            if (gamePieceSprite != NULL)
+            // handle the touch according to touchState
+            if (m_touchState == interact)
             {
-                if (gamePieceSprite->isVisible())
+                // handle the interaction type
+                
+                // super bad hard core coupling between this and GamePiece.cpp gamePieceInteractionType enum
+                // FIX IT SOON!!!
+//                        pieceInteractionSlide = 0,
+//                        pieceInteractionRotary = 1,
+//                        pieceInteractionSwitch = 2,
+//                        pieceInteractionFlip = 3,
+//                        pieceInteractionCount = 4
+                switch (m_interactionState)
                 {
-                    // handle the touch according to touchState
-                    if (m_touchState == interact)
-                    {
-                        // do something with it to test the touch location
-                        gamePieceSprite->switchToRandomPiece();
-                        
-                        // take away 5 points for every touch
-                        m_score = m_score - 5;
-                        
-                        // increment the interaction count
-                        m_interactionCount++;
-                    }
-                    else
-                    {
-                        // do something with it to test the touch location
-                        int comboCount = eliminateGamePieces(gamePieceSprite,0);
-                        // reset the pieces in the grid
-                        recalculateGrid();
-                        if (comboCount == 0)
+                    // pieceInteractionSlide
+                    case is_slide:
+//                        m_interactionState = is_empty;
+//                        m_interactionGamePiece = NULL;
+                        break;
+                    
+                    // pieceInteractionRotary
+                    case is_rotary:
+//                        m_interactionState = is_empty;
+//                        m_interactionGamePiece = NULL;
+                        break;
+                     
+                    // pieceInteractionSwitch
+                    case is_switch:
+                        if (m_interactionGamePiece != NULL)
                         {
-                            // only one piece was eliminated
-                            m_score = m_score - 150;
+                            handleSwitchInteraction(gamePieceSprite);
+                            m_interactionState = is_empty;
+                            m_interactionGamePiece = NULL;
                         }
                         else
                         {
-                            // a combo of two or more was created
-                            m_score = m_score + (100*(comboCount+1));
+                            m_interactionGamePiece = gamePieceSprite;
                         }
+                        break;
                         
-                        // set the high combo
-                        if (comboCount > m_highComboCount)
-                        {
-                            m_highComboCount = comboCount;
-                        }
-                    }
+                    case is_flip:
+                        // flip the piece
+                        handleFlipInteraction(gamePieceSprite);
+                        break;
+                        
+                    case is_dpadflip:
+                        handleDPadFlipInteraction(gamePieceSprite);
+                        break;
+                      
+                    // pieceInteractionFlip is case 3 and default
+                    default:
+                        break;
                 }
-                CCLog("Touch handled");
+                
+            }
+            else
+            {
+                // do something with it to test the touch location
+                int comboCount = eliminateGamePieces(gamePieceSprite,0);
+                // reset the pieces in the grid
+                recalculateGrid();
+                if (comboCount == 0)
+                {
+                    // only one piece was eliminated
+                    m_score = m_score - 150;
+                }
+                else
+                {
+                    // a combo of two or more was created
+                    m_score = m_score + (100*(comboCount+1));
+                }
+                
+                // set the high combo
+                if (comboCount > m_highComboCount)
+                {
+                    m_highComboCount = comboCount;
+                }
             }
         }
+        CCLog("Touch handled");
     }
 }
 
@@ -431,9 +491,114 @@ int Grid::eliminateGamePieces(GamePiece* basePiece, int comboCount)
     return comboCount;
 }
 
+void Grid::ccTouchesBegan(CCSet *touches, CCEvent *event)
+{
+    // Only handle the touch start if the touch state is interaction
+    // Skip setting the state if interactionState is is_switch
+    if (m_touchState == interact && m_interactionState != is_switch)
+    {
+        // Set the current grid state depending on the interaction type
+        CCSetIterator it;
+        CCTouch* touch;
+        
+        for( it = touches->begin(); it != touches->end(); it++)
+        {
+            touch = (CCTouch*)(*it);
+            
+            if(!touch)
+                break;
+            
+            CCPoint location = touch->getLocationInView();
+            location = CCDirector::sharedDirector()->convertToGL(location);
+            
+            // get the game piece that was selected
+            GamePiece *selectedGamePiece = getGamePieceAtLocation(location);
+            if (selectedGamePiece)
+            {
+                // FIX IT SOON
+                switch (selectedGamePiece->getInteractionType())
+                {
+//                        // pieceInteractionSlide
+//                    case 0:
+//                        m_interactionState = is_slide;
+//                        // set the selected game piece
+//                        m_interactionGamePiece = selectedGamePiece;
+//                        break;
+//                        
+//                        // pieceInteractionRotary
+//                    case 1:
+//                        m_interactionState = is_rotary;
+//                        // set the selected game piece
+//                        m_interactionGamePiece = selectedGamePiece;
+//                        break;
+//                        
+//                        // pieceInteractionSwitch
+//                    case 2:
+//                        m_interactionState = is_switch;
+//                        break;
+                    case 0:
+                        m_interactionState = is_flip;
+                        break;
+                        
+                    case 1:
+                        m_interactionState = is_dpadflip;
+                        break;
+                        
+                    case 2:
+                        m_interactionState = is_switch;
+                        break;
+                        
+                        // pieceInteractionFlip is case 3 and default
+                    default:
+                        m_interactionState = is_empty;
+                        break;
+                }
+                // piece found break the loop
+                break;
+            }
+        }
+    }
+}
+
+void Grid::ccTouchesMoved(CCSet *touches, CCEvent *event)
+{
+    // Check the current grid state and handle the move event
+    CCSetIterator it;
+    CCTouch* touch;
+    
+    for( it = touches->begin(); it != touches->end(); it++)
+    {
+        touch = (CCTouch*)(*it);
+        
+        if(!touch)
+            break;
+        
+        CCPoint location = touch->getLocationInView();
+        location = CCDirector::sharedDirector()->convertToGL(location);
+        
+        // FIX IT SOON
+        switch (m_interactionState)
+        {
+                // pieceInteractionSlide
+            case is_slide:
+                //handleSlideMove(location);
+                break;
+                
+                // pieceInteractionRotary
+            case is_rotary:
+                //handleRotaryMove(location);
+                break;
+                
+                // pieceInteractionFlip and pieceInteractionSwitch default to nothing on move
+            default:
+                break;
+        }
+    }
+}
+
 void Grid::ccTouchesEnded(CCSet* touches, CCEvent* event)
 {
-    //Add a new body/atlas sprite at the touched location
+    // Check the current grid state and handle the end event
     CCSetIterator it;
     CCTouch* touch;
     
@@ -448,8 +613,14 @@ void Grid::ccTouchesEnded(CCSet* touches, CCEvent* event)
         
         location = CCDirector::sharedDirector()->convertToGL(location);
         
+        // legacy function handleTouch doesn't account for grid state
         handleTouch( location );
     }
+}
+
+void Grid::ccTouchesCancelled(CCSet *touches, CCEvent *event)
+{
+    CCLog("Touch Cancelled");
 }
 
 bool Grid::isLevelComplete()
@@ -510,8 +681,21 @@ void Grid::recalculateGrid()
     // run through each column and move all of the pieces down if non-active pieces are below
     CCPoint firstNonActive;
     CCPoint firstNonActivePosition = CCPointZero;
+    int numPreviousEmptyCols = 0;
     for (int i = 0; i < GRID_COLS; i++)
     {
+        // check if the previous row was empty
+        if (firstNonActive.x == -1)
+        {
+            // increment the previous row empty count
+            numPreviousEmptyCols++;
+        }
+        else
+        {
+            // if previous rows are not empty then reset the pevious row empty counter
+            numPreviousEmptyCols = 0;
+        }
+        
         // reset the point
         firstNonActive = ccp(-1,-1);
         for (int j = 0; j < GRID_ROWS; j++)
@@ -525,10 +709,6 @@ void Grid::recalculateGrid()
                     firstNonActive = ccp(j,i);
                     firstNonActivePosition = gridTable[j][i]->getPosition();
                 }
-                // remove the child and clear the pointer
-                // (no need to delete since it will be taken care of when grid is destroyed)
-                //removeChild(gridTable[j][j]);
-                //gridTable[j][i] = NULL;
             }
             else
             {
@@ -543,7 +723,6 @@ void Grid::recalculateGrid()
                               
                     // move the piece to the firstNonActive location
                     gridTable[j][i]->setPosition(firstNonActivePosition);
-                    //gridTable[j][i]->setPosition(ccp(0, 32 * j));
                     
                     // extended goofy test
                     GamePiece* emptySpace = gridTable[row][col];
@@ -558,12 +737,179 @@ void Grid::recalculateGrid()
                         firstNonActive = ccp(row, col);
                         firstNonActivePosition = ccp(firstNonActivePosition.x, getPieceHeight()*row);
                     }
-                    
-                    // reset the old reference
-                    //gridTable[j][i] = NULL;
                 }
             }
         }
     }
+    
+    // first find all empty rows and move pieces to the left
+    int emptyColumnCount = 0;
+    for (int i = 0; i < GRID_COLS; i++)
+    {
+        // check the first game piece is active
+        if (!gridTable[0][i]->isActive())
+        {
+            // assume this entire row is empty
+            emptyColumnCount++;
+        }
+        else
+        {
+            // the game piece is active
+            // check to for a column movement
+            if (emptyColumnCount > 0)
+            {
+                // move the active column to the left
+                // loop all of the pieces in the column until an empty piece is encountered
+                for(int j = 0; j < GRID_ROWS; j++)
+                {
+                    // check for the first inactive piece
+                    if (!gridTable[j][i]->isActive())
+                    {
+                        // if the piece is inactive break the loop
+                        break;
+                    }
+                    
+//                    // need a temp holder piece
+//                    GamePiece gamePieceHolder = *gridTable[j][i - emptyColumnCount];
+//                    // replace the empty piece pointer with the active piece
+//                    gridTable[j][i - emptyColumnCount] = gridTable[j][i];
+//                    // replace the moved active piece with the empty piece stored in holder
+//                    gridTable[j][i] = &gamePieceHolder;
+                    
+                    // fix the positions
+                    CCPoint positionHolder = gridTable[j][i - emptyColumnCount]->getPosition();
+                    gridTable[j][i - emptyColumnCount]->setPosition(gridTable[j][i]->getPosition());
+                    gridTable[j][i]->setPosition(positionHolder);
+                    
+                    // switch the pointers
+                    GamePiece* pointerHolder = gridTable[j][i - emptyColumnCount];
+                    gridTable[j][i - emptyColumnCount] = gridTable[j][i];
+                    gridTable[j][i] = pointerHolder;
+                    
+                    //gridTable[j][i]->setColor(ccBLUE);
+                }
+                // hacky decrement the i counter
+                i--;
+                
+                // reset the counter
+                emptyColumnCount = 0;
+            }
+        }
+    }
 }
+
+void Grid::handleSlideMove(CCPoint location)
+{
+    // slide the row or column until the user releases the touch
+    // funky row move
+    // all the pieces in the row the offset of the touch movement
+    // get the current location of the selected piece
+    CCPoint currLoc = m_interactionGamePiece->getPosition();
+    
+    // get the delta of the piece movement
+    float deltaX = currLoc.x - location.x;
+    
+    // set the location of the selected piece to the new location
+    //m_interactionGamePiece->setPosition(location);
+    
+    // offset all the pieces in the row by the delta
+}
+
+void Grid::handleRotaryMove(CCPoint location)
+{
+    // rotate the pieces in a rotary movement
+    // this one might be tricky since it relies on the user input
+    // this is probably best for a grid state to account for user input
+}
+
+void Grid::handleSwitchInteraction(GamePiece* gamePieceSprite)
+{
+    // switch two pieces location
+    // need the gridTable pointers to switch the pieces
+    CCPoint firstSelectedGamePieceIndex = getIndexAtGamePiece(m_interactionGamePiece);
+    CCPoint secondSelectedGamePieceIndex = getIndexAtGamePiece(gamePieceSprite);
+    GamePiece* firstGamePiece = getGamePieceAtIndex(firstSelectedGamePieceIndex.x, firstSelectedGamePieceIndex.y);
+    GamePiece* secondGamePiece = getGamePieceAtIndex(secondSelectedGamePieceIndex.x, secondSelectedGamePieceIndex.y);
+    int firstRow = firstSelectedGamePieceIndex.y;
+    int firstCol = firstSelectedGamePieceIndex.x;
+    int secondRow = secondSelectedGamePieceIndex.y;
+    int secondCol = secondSelectedGamePieceIndex.x;
+    
+    // get the first selected gamepiece's location
+    CCPoint selectedLocation = gridTable[firstRow][firstCol]->getPosition();
+    // set the first selected gamepiece's location to the location of the second piece
+    gridTable[firstRow][firstCol]->setPosition(gridTable[secondRow][secondCol]->getPosition());
+    // set the second selected gamepiece's location to the saved location
+    gridTable[secondRow][secondCol]->setPosition(selectedLocation);
+    
+    // switch the pointers
+    GamePiece* pointerHolder = gridTable[firstRow][firstCol];
+    gridTable[firstRow][firstCol] = gridTable[secondRow][secondCol];
+    gridTable[secondRow][secondCol] = pointerHolder;
+}
+
+void Grid::handleFlipInteraction(GamePiece* gamePieceSprite)
+{
+    // single piece flip interaction
+    // since this is an instant action no state is required
+    
+    gamePieceSprite->switchToNextPiece();
+    
+    // reset the interactionState
+    m_interactionState = is_empty;
+    
+    // take away 5 points for every touch
+    m_score = m_score - 5;
+    
+    // increment the interaction count
+    m_interactionCount++;
+}
+
+void Grid::handleDPadFlipInteraction(GamePiece* gamePieceSprite)
+{
+    // DPad flip interaction
+    // since this is an instant action no state is required
+    // do something with it to test the touch location
+    
+    // change the pieces to the top/bottom/left/right
+    CCPoint selectedIndex = getIndexAtGamePiece(gamePieceSprite);
+    CCLog("Index x:%f y:%f", selectedIndex.x, selectedIndex.y);
+    // check up
+    GamePiece* gamePieceHolder = getGamePieceAtIndex(selectedIndex.y + 1, selectedIndex.x);
+    if(gamePieceHolder != NULL)
+    {
+        gamePieceHolder->switchToNextPiece();
+    }
+    
+    // check right
+    gamePieceHolder = getGamePieceAtIndex(selectedIndex.y, selectedIndex.x + 1);
+    if(gamePieceHolder != NULL)
+    {
+        gamePieceHolder->switchToNextPiece();
+    }
+    
+    // check bottom
+    gamePieceHolder = getGamePieceAtIndex(selectedIndex.y - 1, selectedIndex.x);
+    if(gamePieceHolder != NULL)
+    {
+        gamePieceHolder->switchToNextPiece();
+    }
+    
+    // check left
+    gamePieceHolder = getGamePieceAtIndex(selectedIndex.y, selectedIndex.x - 1);
+    if(gamePieceHolder != NULL)
+    {
+        gamePieceHolder->switchToNextPiece();
+    }
+    
+    // reset the interactionState
+    m_interactionState = is_empty;
+    
+    // take away 5 points for every touch
+    m_score = m_score - 5;
+    
+    // increment the interaction count
+    m_interactionCount++;
+}
+
 
