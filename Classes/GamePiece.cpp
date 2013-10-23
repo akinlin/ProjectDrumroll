@@ -37,10 +37,11 @@ enum gamePieceColor
 
 enum gamePieceInteractionType
 {
-    pieceInteractionFlip = 0,
-    pieceInteractionDPadFlip = 1,
-    pieceInteractionSwitch = 2,
-    pieceInteractionCount = 3
+    pieceInteractionEmpty = 0,
+    pieceInteractionFlip = 1,
+    pieceInteractionDPadFlip = 2,
+    pieceInteractionSwitch = 3,
+    pieceInteractionCount = 4
 };
 
 GamePiece::GamePiece()
@@ -52,13 +53,13 @@ GamePiece::GamePiece()
     m_isActive = true;
     
     s_color = arc4random() % gamePieceColorCount;
-    if (arc4random() % 8 == 1)
+    if (arc4random() % 10 == 1)
     {
         s_interactionType = arc4random() % pieceInteractionCount;
     }
     else
     {
-        s_interactionType = pieceInteractionFlip;
+        s_interactionType = pieceInteractionEmpty;
     }
     
 //    int idx = (CCRANDOM_0_1() > .5 ? 0:1);
@@ -95,7 +96,14 @@ GamePiece::GamePiece()
 //        m_interactionSprite->setColor(ccBLACK);
 //        this->addChild(m_interactionSprite);
 //    }
-    if (s_interactionType == pieceInteractionDPadFlip)
+    if (s_interactionType == pieceInteractionFlip)
+    {
+        m_interactionSprite = CCLabelTTF::create("Flip", "Arial", VisibleRect::getScaledFont(5));
+        m_interactionSprite->setPosition(ccp((getTextureWidth()/2)/2, (getTextureHeight()/2)/2));
+        m_interactionSprite->setColor(ccBLACK);
+        this->addChild(m_interactionSprite);
+    }
+    else if (s_interactionType == pieceInteractionDPadFlip)
     {
         m_interactionSprite = CCLabelTTF::create("DPad", "Arial", VisibleRect::getScaledFont(5));
         m_interactionSprite->setPosition(ccp((getTextureWidth()/2)/2, (getTextureHeight()/2)/2));

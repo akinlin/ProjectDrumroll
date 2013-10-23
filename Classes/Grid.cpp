@@ -536,15 +536,15 @@ void Grid::ccTouchesBegan(CCSet *touches, CCEvent *event)
 //                    case 2:
 //                        m_interactionState = is_switch;
 //                        break;
-                    case 0:
+                    case 1:
                         m_interactionState = is_flip;
                         break;
                         
-                    case 1:
+                    case 2:
                         m_interactionState = is_dpadflip;
                         break;
                         
-                    case 2:
+                    case 3:
                         m_interactionState = is_switch;
                         break;
                         
